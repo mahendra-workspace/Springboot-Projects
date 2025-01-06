@@ -1,12 +1,14 @@
 package com.example.demo.services;
 
 import com.example.demo.entities.Users;
+import com.example.demo.repositories.EmployeeRepository;
 import com.example.demo.repositories.UsersRepository;
+
+import jakarta.transaction.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
-import javax.management.RuntimeErrorException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,13 +16,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class UsersService {
 
-	private final UsersRepository usersRepository; 
-	
 	@Autowired
-	public UsersService(UsersRepository usersRepository) {
-		this.usersRepository = usersRepository;
-	}
+	private UsersRepository usersRepository; 
 	
+    @Autowired
+    private EmployeeRepository employeeRepository;
 	
 	public Optional<List<Users>> getAllUsers(){
 		return Optional.ofNullable(usersRepository.findAll());
@@ -53,4 +53,24 @@ public class UsersService {
 			throw new RuntimeException("Use with username "+username+" not found");
 		}	
 	}
+	
+	@Transactional
+    public void deleteUser(String username) {
+		
+		
+        Optional<Users> userOpt = usersRepository.findByUsername(username);
+        if (!userOpt.isPresent()) {
+            throw new IllegalArgumentException("User not found with username: " + username);
+        }
+
+        Users user = userOpt.get();
+
+        // Delete related employee
+        employeeRepository.deleteByUser(user);
+
+
+
+        // Delete the user itself
+        usersRepository.delete(user);
+    }
 }
