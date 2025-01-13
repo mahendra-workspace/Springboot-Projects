@@ -1,12 +1,15 @@
 package com.example.demo.entities;
 
 import java.sql.Date;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -21,6 +24,9 @@ public class Users {
 	@Column(name = "username", unique = true)
 	private String username;
 	
+	@Column(name="password")
+	private String password;
+	
 	@Column(name="gmail", unique = true)
 	private String gmail;
 	
@@ -32,6 +38,24 @@ public class Users {
 	
 	@Column(name="birth_date")
 	private Date birthDate;
+	
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;  
+    
+    @Column(name="role")
+    private String role;
+
+	
+    public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
+	}
+
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Employee> employees;
 
 	public int getUserId() {
 		return userId;
@@ -80,4 +104,25 @@ public class Users {
 	public void setBirthDate(Date birthDate) {
 		this.birthDate = birthDate;
 	}
+	
+	
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
+    }
+
+    public void setProfilePictureUrl(String profilePictureUrl) {
+        this.profilePictureUrl = profilePictureUrl;
+    }
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+
+    
+    
 }
