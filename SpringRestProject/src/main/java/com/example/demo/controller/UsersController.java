@@ -5,12 +5,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.entities.Users;
+import com.example.demo.repositories.UsersRepository;
+import com.example.demo.services.JWTService;
 import com.example.demo.services.LocalS3Service;
 import com.example.demo.services.UsersService;
 
@@ -34,8 +40,14 @@ public class UsersController {
 	@Autowired
 	private UsersService usersService;
 	
+	@Autowired
+	private UsersRepository userRepository;
+	
     @Autowired
     private LocalS3Service localS3Service;
+    
+    @Autowired
+    private JWTService jwtService;
     
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 	
@@ -62,9 +74,34 @@ public class UsersController {
 	}
 	
 	@PostMapping("/login")
-	public String login(@RequestBody Users user) {
+	public Map<String, String> login(@RequestBody Users user) {
 		return usersService.verifyUser(user);
 	}
+	
+	@PostMapping("/refresh-token")
+	public ResponseEntity<Map<String, String>> refreshToken(@RequestBody String refreshToken) {
+	   
+
+	    if (refreshToken == null || !jwtService.validateRefressToken(refreshToken)) {
+	        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Collections.singletonMap("message", "Invalid refresh token"));
+	    }
+
+	    String username = jwtService.extractUsername(refreshToken);
+
+
+	    Users user = userRepository.findByUsername(username)
+	    		.orElseThrow(() -> new RuntimeException("User not found"));
+
+
+	    String newAccessToken = jwtService.generateAccessToken(user);
+
+
+	    Map<String, String> response = new HashMap<>();
+	    response.put("accessToken", newAccessToken);
+
+	    return ResponseEntity.ok(response);
+	}
+
 	
     @PutMapping("/{userId}")
     public Users updateUser(@PathVariable String username, @RequestBody Users updatedUser) {

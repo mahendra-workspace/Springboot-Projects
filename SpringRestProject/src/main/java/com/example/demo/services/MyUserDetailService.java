@@ -1,5 +1,6 @@
 package com.example.demo.services;
 
+import java.util.ArrayList;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,14 +20,16 @@ public class MyUserDetailService implements UserDetailsService{
 	private UsersRepository userRepo;
 	
 	@Override
-	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		
-		Optional<Users> user = userRepo.findByUsername(username);
-		if (!user.isPresent()) {
-		    throw new UsernameNotFoundException("User not found");
-		}
-		return new UserDetail(user.get());
+	public UserDetails loadUserByUsername(String identifier) throws UsernameNotFoundException {
+	    Users user = userRepo.findByUsernameOrGmailOrPhoneNumber(identifier, identifier, identifier)
+	        .orElseThrow(() -> new UsernameNotFoundException("User not found with identifier: " + identifier));
+	    return new org.springframework.security.core.userdetails.User(
+	        user.getUsername(),
+	        user.getPassword(),
+	        new ArrayList<>() // Authorities
+	    );
 	}
+
 	
 	
 

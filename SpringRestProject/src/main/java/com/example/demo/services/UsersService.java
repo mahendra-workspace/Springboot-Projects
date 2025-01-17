@@ -6,7 +6,9 @@ import com.example.demo.repositories.UsersRepository;
 
 import jakarta.transaction.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -83,11 +85,34 @@ public class UsersService {
         usersRepository.delete(user);
     }
 
-	public String verifyUser(Users user) {
-		Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword()));
-		if(authentication.isAuthenticated())
-			return jwtService.generateToken(user.getUsername());
+	public Map<String, String> verifyUser(Users user) {
 		
-		return "Login Failed";
+	    // Determine if the user provided a username, email, or phone number
+	    String credential = user.getUsername(); // Default to username field
+
+	    // Check for phone number or email
+	    if (user.getPhoneNumber() != null && !user.getPhoneNumber().isEmpty()) {
+	        credential = user.getPhoneNumber();
+	    } else if (user.getGmail() != null && !user.getGmail().isEmpty()) {
+	        credential = user.getGmail();
+	    }
+	    
+		Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(credential, user.getPassword()));
+	    if (authentication.isAuthenticated()) {
+	        Users fullUser = usersRepository.findByUsernameOrGmailOrPhoneNumber(credential, credential, credential)
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+
+	        // Generate access and refresh tokens
+	        String accessToken = jwtService.generateAccessToken(fullUser);
+	        String refreshToken = jwtService.generateRefreshToken(fullUser);
+
+	        // Return tokens in a response map
+	        Map<String, String> tokens = new HashMap<>();
+	        tokens.put("accessToken", accessToken);
+	        tokens.put("refreshToken", refreshToken);
+	        return tokens;
+	    }
+		
+	    throw new RuntimeException("Login Failed");
 	}
 }

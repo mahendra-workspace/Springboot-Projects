@@ -50,7 +50,7 @@ public class SecurityConfig {
 		return httpSecurity
 					.csrf(Customizer->Customizer.disable())
 					.authorizeHttpRequests(request->request
-							.requestMatchers("/api/user/register","/api/user/login")
+							.requestMatchers("/api/user/register","/api/user/login","/api/user/refresh-token")
 							.permitAll()
 							.anyRequest().authenticated())
 					.httpBasic(Customizer.withDefaults())

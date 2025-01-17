@@ -15,4 +15,7 @@ public interface UsersRepository extends JpaRepository<Users, Integer> {
 	
 	Optional<Users> findByGmail(String gmail);
 	
+	Optional<Users> findByUsernameOrGmailOrPhoneNumber(String username, String Gmail, String phoneNumber);
+
+	
 }
